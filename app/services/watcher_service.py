@@ -25,7 +25,7 @@ def fetch_html(url: str) -> str:
 def fetch_html_js(url: str) -> str:
     try:
         from playwright.sync_api import sync_playwright
-    except ImportError as exc:  # pragma: no cover - optional dependency
+    except ImportError as exc:  # optional dependency
         raise RuntimeError("playwright not installed; pip install playwright and run 'playwright install chromium'") from exc
 
     with sync_playwright() as p:
@@ -106,11 +106,7 @@ class WatcherScheduler:
 
             status, error_message = self._detect(watcher)
 
-            should_email = (
-                status == StatusEnum.found
-                and watcher.last_status != StatusEnum.found
-                and watcher.emails
-            )
+            should_email = status == StatusEnum.found and watcher.emails
 
             watcher.last_check_at = now
             watcher.last_status = status
@@ -126,7 +122,6 @@ class WatcherScheduler:
             try:
                 db.commit()
             except StaleDataError:
-                # Watcher was deleted or changed concurrently; drop job and exit quietly.
                 db.rollback()
                 self.remove_job(watcher_id)
                 return
