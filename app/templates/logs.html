@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Logs for Watcher #{{ watcher.id }}</h2>
+<p><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Checked At (UTC)</th>
+      <th>Status</th>
+      <th>Error</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for log in logs %}
+    <tr>
+      <td>{{ log.checked_at }}</td>
+      <td><span class="badge {{ log.status }}">{{ log.status }}</span></td>
+      <td>{{ log.error_message or '-' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="/" class="link-btn">Back</a>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="actions">
+  <h2>Watchers</h2>
+  <a class="primary" href="/watchers/new">+ New Watcher</a>
+</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>URL</th>
+      <th>Phrase</th>
+      <th>Interval (m)</th>
+      <th>Enabled</th>
+      <th>Last Status</th>
+      <th>Last Check</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for w in watchers %}
+    <tr>
+      <td>{{ w.id }}</td>
+      <td class="url">{{ w.url }}</td>
+      <td>{{ w.phrase }}</td>
+      <td>{{ w.interval_minutes }}</td>
+      <td>{{ 'Yes' if w.enabled else 'No' }}</td>
+      <td><span class="badge {{ w.last_status or 'unknown' }}">{{ w.last_status or 'unknown' }}</span></td>
+      <td>{{ w.last_check_at or '-' }}</td>
+      <td class="flex">
+        <a href="/watchers/{{ w.id }}/edit">Edit</a>
+        <form method="post" action="/watchers/{{ w.id }}/toggle">
+          <button type="submit" class="link-btn">{{ 'Disable' if w.enabled else 'Enable' }}</button>
+        </form>
+        <form method="post" action="/watchers/{{ w.id }}/run">
+          <button type="submit" class="link-btn">Check Now</button>
+        </form>
+        <a href="/watchers/{{ w.id }}/logs-view">Logs</a>
+        <form method="post" action="/watchers/{{ w.id }}/delete" onsubmit="return confirm('Delete watcher?')">
+          <button type="submit" class="danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if not watchers %}
+  <p>No watchers yet.</p>
+{% endif %}
+{% endblock %}

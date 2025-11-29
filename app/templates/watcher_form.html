@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card narrow">
+  <h2>{{ 'Edit' if watcher else 'Create' }} Watcher</h2>
+  <form method="post" class="form-grid">
+    <label>URL</label>
+    <input name="url" type="url" required value="{{ watcher.url if watcher else '' }}" />
+
+    <label>Phrase</label>
+    <input name="phrase" type="text" required value="{{ watcher.phrase if watcher else '' }}" />
+
+    <label>Interval minutes</label>
+    <input name="interval_minutes" type="number" min="1" required value="{{ watcher.interval_minutes if watcher else 5 }}" />
+
+    <label>Emails (comma separated)</label>
+    <input name="emails" type="text" value="{{ watcher.emails if watcher else '' }}" />
+
+    <label class="checkbox">
+      <input name="enabled" type="checkbox" {% if watcher and watcher.enabled %}checked{% elif not watcher %}checked{% endif %} />
+      Enabled
+    </label>
+
+    <div class="form-actions">
+      <a class="link-btn" href="/">Cancel</a>
+      <button type="submit" class="primary">Save</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

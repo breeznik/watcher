@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card narrow">
+  <h2>Login</h2>
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/login" class="form-grid">
+    <label>Username</label>
+    <input name="username" type="text" required />
+    <label>Password</label>
+    <input name="password" type="password" required />
+    <button type="submit" class="primary">Sign In</button>
+  </form>
+</div>
+{% endblock %}
