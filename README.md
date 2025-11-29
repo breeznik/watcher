@@ -69,6 +69,6 @@ See `deploy/watcher.service.example`. Place project in `/opt/watcher`, set owner
 - `deploy/nginx.conf` reverse proxy
 
 ## Notes
-- Email alerts fire only when status transitions from `not_found` (or unknown) to `found`.
+- Email alerts fire only when status transitions from `not_found` (or unknown) to `found` [revoked].
 - Manual "Check Now" runs immediately without waiting for the next interval.
-- JS rendering adds resource usage; keep `render_timeout` reasonable (10–30s).
+- JS rendering adds resource usage; keep `render_timeout` reasonable (10â€“30s).
