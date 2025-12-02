@@ -282,42 +282,48 @@ class WatcherScheduler:
                 status, error_message = self._detect(watcher)
                 logger.info(f"[Watcher #{watcher.id}] Check result: {status}")
 
-            should_email = status == StatusEnum.found and watcher.emails
-
-            watcher.last_check_at = now
-            watcher.last_status = status
-            watcher.last_error = error_message
-
-            log_entry = CheckLog(
-                watcher_id=watcher.id,
-                checked_at=now,
-                status=status,
-                error_message=error_message,
-            )
-            db.add(log_entry)
-            try:
-                db.commit()
-            except StaleDataError:
-                db.rollback()
-                self.remove_job(watcher_id)
-                return
-            except Exception:
-                db.rollback()
-                raise
-
-            if should_email:
-                emails = [e.strip() for e in watcher.emails.split(",") if e.strip()]
-                if emails:
-                    logger.info(f"[Watcher #{watcher.id}] Sending alert emails to {len(emails)} recipients")
-                    subject = f"Watcher alert: phrase found for {watcher.url}"
-                    body = (
+                should_email = status == StatusEnum.found and watcher.emails
+                
+                # Capture email data before session closes
+                if should_email:
+                    email_list = [e.strip() for e in watcher.emails.split(",") if e.strip()]
+                    email_subject = f"Watcher alert: phrase found for {watcher.url}"
+                    email_body = (
                         f"Watcher #{watcher.id}\nURL: {watcher.url}\nPhrase: {watcher.phrase}\nTime: {now} UTC"
                     )
-                    try:
-                        send_email(emails, subject, body)
-                        logger.info(f"[Watcher #{watcher.id}] Alert email sent successfully")
-                    except Exception as e:
-                        logger.error(f"[Watcher #{watcher.id}] Failed to send email: {e}")
+                else:
+                    email_list = []
+                    email_subject = ""
+                    email_body = ""
+
+                watcher.last_check_at = now
+                watcher.last_status = status
+                watcher.last_error = error_message
+
+                log_entry = CheckLog(
+                    watcher_id=watcher.id,
+                    checked_at=now,
+                    status=status,
+                    error_message=error_message,
+                )
+                db.add(log_entry)
+                try:
+                    db.commit()
+                except StaleDataError:
+                    db.rollback()
+                    self.remove_job(watcher_id)
+                    return
+                except Exception:
+                    db.rollback()
+                    raise
+
+            if should_email and email_list:
+                logger.info(f"[Watcher #{watcher_id}] Sending alert emails to {len(email_list)} recipients")
+                try:
+                    send_email(email_list, email_subject, email_body)
+                    logger.info(f"[Watcher #{watcher_id}] Alert email sent successfully")
+                except Exception as e:
+                    logger.error(f"[Watcher #{watcher_id}] Failed to send email: {e}")
         finally:
             if force and watcher_id in self.manual_checks_in_progress:
                 self.manual_checks_in_progress.discard(watcher_id)
