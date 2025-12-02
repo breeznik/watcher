@@ -1,52 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-{% if request.query_params.get('queued') %}
-<div class="notice">
-  Manual check started. Feel free to stay on this page; refresh in a bit to see the latest status without leaving the app.
+<div style="display: flex; flex-direction: column; height: calc(100vh - 100px); gap: 8px;">
+  {% if request.query_params.get('queued') %}
+  <div class="notice">
+    Manual check started. Feel free to stay on this page; refresh in a bit to see the latest status without leaving the app.
+  </div>
+  {% endif %}
+  {% if request.query_params.get('busy') %}
+  <div class="alert">
+    A manual check is already running for this watcher. Please wait for it to complete before starting another.
+  </div>
+  {% endif %}
+  <div class="actions">
+    <h2>Logs for Watcher #{{ watcher.id }}</h2>
+    <a href="/" class="link-btn">← Back</a>
+  </div>
+  <p style="margin: 0;"><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
+  <div class="table-wrapper" style="flex: 1; overflow-y: auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Checked At (UTC)</th>
+          <th>Status</th>
+          <th>Email Sent</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for log in logs %}
+        <tr>
+          <td data-label="Checked At"><span class="cell-value">{{ log.checked_at | format_datetime }}</span></td>
+          {% set status_value = log.status.value if log.status else 'unknown' %}
+          <td data-label="Status">
+            <span class="cell-value"><span class="badge {{ status_value }}">{{ status_value.replace('_', ' ') | title }}</span></span>
+          </td>
+          <td data-label="Email Sent">
+            <span class="cell-value">
+              {% if log.email_sent %}
+                <span class="badge found">✓ Yes</span>
+              {% elif log.status.value == 'found' %}
+                <span class="badge error">✗ Failed</span>
+                {% if log.email_error %}<br><small>{{ log.email_error }}</small>{% endif %}
+              {% else %}
+                <span style="color: #666;">-</span>
+              {% endif %}
+            </span>
+          </td>
+          <td data-label="Error"><span class="cell-value">{{ log.error_message or '-' }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
-{% endif %}
-{% if request.query_params.get('busy') %}
-<div class="alert">
-  A manual check is already running for this watcher. Please wait for it to complete before starting another.
-</div>
-{% endif %}
-<h2>Logs for Watcher #{{ watcher.id }}</h2>
-<p><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
-<div class="table-wrapper">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Checked At (UTC)</th>
-        <th>Status</th>
-        <th>Email Sent</th>
-        <th>Error</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for log in logs %}
-      <tr>
-        <td data-label="Checked At"><span class="cell-value">{{ log.checked_at | format_datetime }}</span></td>
-        {% set status_value = log.status.value if log.status else 'unknown' %}
-        <td data-label="Status">
-          <span class="cell-value"><span class="badge {{ status_value }}">{{ status_value.replace('_', ' ') | title }}</span></span>
-        </td>
-        <td data-label="Email Sent">
-          <span class="cell-value">
-            {% if log.email_sent %}
-              <span class="badge found">✓ Yes</span>
-            {% elif log.status.value == 'found' %}
-              <span class="badge error">✗ Failed</span>
-              {% if log.email_error %}<br><small>{{ log.email_error }}</small>{% endif %}
-            {% else %}
-              <span style="color: #666;">-</span>
-            {% endif %}
-          </span>
-        </td>
-        <td data-label="Error"><span class="cell-value">{{ log.error_message or '-' }}</span></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
-<a href="/" class="link-btn">Back</a>
 {% endblock %}

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+<div style="display: flex; flex-direction: column; height: calc(100vh - 60px); gap: 8px;">
 <div class="actions">
   <h2>Watchers</h2>
   <a class="primary" href="/watchers/new">+ New Watcher</a>
 </div>
-<div class="table-wrapper">
+<div class="table-wrapper" style="flex: 1; overflow-y: auto;">
   <table class="table">
     <thead>
       <tr>
@@ -54,6 +55,7 @@
   </table>
 </div>
 {% if not watchers %}
-  <p>No watchers yet.</p>
+  <p style="margin: 0;">No watchers yet.</p>
 {% endif %}
+</div>
 {% endblock %}

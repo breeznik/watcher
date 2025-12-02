@@ -11,14 +11,30 @@
 <body>
   <header class="topbar">
     <div class="brand">Phrase Watcher</div>
-    {% if request.session.get('user') %}
-    <form method="post" action="/logout">
-      <button type="submit" class="link-btn">Logout</button>
-    </form>
-    {% endif %}
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button id="theme-toggle" class="link-btn" title="Toggle theme">◐</button>
+      {% if request.session.get('user') %}
+      <form method="post" action="/logout">
+        <button type="submit" class="link-btn">Logout</button>
+      </form>
+      {% endif %}
+    </div>
   </header>
   <main class="container">
     {% block content %}{% endblock %}
   </main>
+  <script>
+    const theme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const themes = ['light', 'neon', 'dark'];
+      const currentIndex = themes.indexOf(current);
+      const next = themes[(currentIndex + 1) % themes.length];
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
 </body>
 </html>
