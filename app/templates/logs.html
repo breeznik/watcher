@@ -13,10 +13,20 @@
   {% endif %}
   <div class="actions">
     <h2>Logs for Watcher #{{ watcher.id }}</h2>
-    <a href="/" class="link-btn">← Back</a>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <select id="status-filter" class="link-btn" style="padding: 4px 8px;">
+        <option value="all">All Status</option>
+        <option value="found">Found</option>
+        <option value="not_found">Not Found</option>
+        <option value="error">Error</option>
+        <option value="heavy">Heavy</option>
+        <option value="unknown">Unknown</option>
+      </select>
+      <a href="/" class="link-btn">← Back</a>
+    </div>
   </div>
   <p style="margin: 0;"><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
-  <div class="table-wrapper" style="flex: 1; overflow-y: auto;">
+  <div id="logs-container" class="table-wrapper" style="flex: 1; overflow-y: auto;">
     <table class="table">
       <thead>
         <tr>
@@ -26,9 +36,9 @@
           <th>Error</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="logs-tbody">
       {% for log in logs %}
-        <tr>
+        <tr data-status="{{ log.status.value if log.status else 'unknown' }}">
           <td data-label="Checked At"><span class="cell-value">{{ log.checked_at | format_datetime }}</span></td>
           {% set status_value = log.status.value if log.status else 'unknown' %}
           <td data-label="Status">
@@ -51,6 +61,109 @@
       {% endfor %}
       </tbody>
     </table>
+    <div id="loading" style="display: none; text-align: center; padding: 12px; color: var(--muted);">Loading more...</div>
   </div>
 </div>
+<script>
+  let offset = {{ logs|length }};
+  let loading = false;
+  let hasMore = true;
+  const watcherId = {{ watcher.id }};
+  
+  const container = document.getElementById('logs-container');
+  const tbody = document.getElementById('logs-tbody');
+  const loadingDiv = document.getElementById('loading');
+  const statusFilter = document.getElementById('status-filter');
+  
+  statusFilter.addEventListener('change', () => {
+    const selectedStatus = statusFilter.value;
+    const rows = tbody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+      const rowStatus = row.getAttribute('data-status');
+      if (selectedStatus === 'all' || rowStatus === selectedStatus) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+  
+  container.addEventListener('scroll', () => {
+    if (loading || !hasMore) return;
+    
+    const scrollTop = container.scrollTop;
+    const scrollHeight = container.scrollHeight;
+    const clientHeight = container.clientHeight;
+    
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      loadMore();
+    }
+  });
+  
+  async function loadMore() {
+    loading = true;
+    loadingDiv.style.display = 'block';
+    
+    try {
+      const response = await fetch(`/watchers/${watcherId}/logs-api?offset=${offset}&limit=20`);
+      const logs = await response.json();
+      
+      if (logs.length === 0) {
+        hasMore = false;
+        loadingDiv.textContent = 'No more logs';
+        setTimeout(() => loadingDiv.style.display = 'none', 2000);
+        return;
+      }
+      
+      logs.forEach(log => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-status', log.status);
+        const statusClass = log.status;
+        const statusText = log.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
+        let emailCell = '-';
+        if (log.email_sent) {
+          emailCell = '<span class="badge found">✓ Yes</span>';
+        } else if (log.status === 'found') {
+          emailCell = '<span class="badge error">✗ Failed</span>';
+          if (log.email_error) {
+            emailCell += `<br><small>${log.email_error}</small>`;
+          }
+        } else {
+          emailCell = '<span style="color: #666;">-</span>';
+        }
+        
+        row.innerHTML = `
+          <td data-label="Checked At"><span class="cell-value">${log.checked_at}</span></td>
+          <td data-label="Status"><span class="cell-value"><span class="badge ${statusClass}">${statusText}</span></span></td>
+          <td data-label="Email Sent"><span class="cell-value">${emailCell}</span></td>
+          <td data-label="Error"><span class="cell-value">${log.error_message || '-'}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      // Apply current filter to newly loaded rows
+      const selectedStatus = statusFilter.value;
+      if (selectedStatus !== 'all') {
+        const newRows = tbody.querySelectorAll('tr');
+        newRows.forEach(row => {
+          const rowStatus = row.getAttribute('data-status');
+          if (rowStatus !== selectedStatus) {
+            row.style.display = 'none';
+          }
+        });
+      }
+      
+      offset += logs.length;
+      loadingDiv.style.display = 'none';
+    } catch (error) {
+      console.error('Error loading logs:', error);
+      loadingDiv.textContent = 'Error loading logs';
+      setTimeout(() => loadingDiv.style.display = 'none', 2000);
+    } finally {
+      loading = false;
+    }
+  }
+</script>
 {% endblock %}

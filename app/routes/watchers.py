@@ -158,7 +158,7 @@ def view_logs(watcher_id: int, request: Request, db: Session = Depends(get_db)):
             select(models.CheckLog)
             .where(models.CheckLog.watcher_id == watcher_id)
             .order_by(models.CheckLog.checked_at.desc())
-            .limit(50)
+            .limit(20)
         )
         .scalars()
         .all()
@@ -166,6 +166,39 @@ def view_logs(watcher_id: int, request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         "logs.html", {"request": request, "watcher": watcher, "logs": logs}
     )
+
+
+@router.get("/watchers/{watcher_id}/logs-api")
+def get_logs_api(watcher_id: int, request: Request, offset: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+    _ensure_user(request)
+    logs = (
+        db.execute(
+            select(models.CheckLog)
+            .where(models.CheckLog.watcher_id == watcher_id)
+            .order_by(models.CheckLog.checked_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
+    
+    from datetime import datetime
+    def format_datetime(dt):
+        if dt and isinstance(dt, datetime):
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        return '-'
+    
+    return JSONResponse([
+        {
+            "checked_at": format_datetime(log.checked_at),
+            "status": log.status.value,
+            "email_sent": log.email_sent,
+            "email_error": log.email_error,
+            "error_message": log.error_message
+        }
+        for log in logs
+    ])
 
 
 # API ROUTES

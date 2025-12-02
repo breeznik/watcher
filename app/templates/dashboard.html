@@ -3,7 +3,17 @@
 <div style="display: flex; flex-direction: column; height: calc(100vh - 60px); gap: 8px;">
 <div class="actions">
   <h2>Watchers</h2>
-  <a class="primary" href="/watchers/new">+ New Watcher</a>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <select id="status-filter" class="link-btn" style="padding: 4px 8px;">
+      <option value="all">All Status</option>
+      <option value="found">Found</option>
+      <option value="not_found">Not Found</option>
+      <option value="error">Error</option>
+      <option value="heavy">Heavy</option>
+      <option value="unknown">Unknown</option>
+    </select>
+    <a class="primary" href="/watchers/new">+ New Watcher</a>
+  </div>
 </div>
 <div class="table-wrapper" style="flex: 1; overflow-y: auto;">
   <table class="table">
@@ -19,9 +29,9 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="watchers-tbody">
       {% for w in watchers %}
-      <tr>
+      <tr data-status="{{ w.last_status.value if w.last_status else 'unknown' }}">
         <td data-label="ID"><span class="cell-value">{{ w.id }}</span></td>
         <td data-label="URL"><span class="cell-value url" title="{{ w.url }}">{{ w.url }}</span></td>
         <td data-label="Phrase"><span class="cell-value">{{ w.phrase }}</span></td>
@@ -58,4 +68,21 @@
   <p style="margin: 0;">No watchers yet.</p>
 {% endif %}
 </div>
+<script>
+  const statusFilter = document.getElementById('status-filter');
+  const rows = document.querySelectorAll('#watchers-tbody tr');
+  
+  statusFilter.addEventListener('change', () => {
+    const selectedStatus = statusFilter.value;
+    
+    rows.forEach(row => {
+      const rowStatus = row.getAttribute('data-status');
+      if (selectedStatus === 'all' || rowStatus === selectedStatus) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+</script>
 {% endblock %}
