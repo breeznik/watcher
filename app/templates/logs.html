@@ -18,16 +18,29 @@
       <tr>
         <th>Checked At (UTC)</th>
         <th>Status</th>
+        <th>Email Sent</th>
         <th>Error</th>
       </tr>
     </thead>
     <tbody>
     {% for log in logs %}
       <tr>
-        <td data-label="Checked At"><span class="cell-value">{{ log.checked_at }}</span></td>
+        <td data-label="Checked At"><span class="cell-value">{{ log.checked_at | format_datetime }}</span></td>
         {% set status_value = log.status.value if log.status else 'unknown' %}
         <td data-label="Status">
           <span class="cell-value"><span class="badge {{ status_value }}">{{ status_value.replace('_', ' ') | title }}</span></span>
+        </td>
+        <td data-label="Email Sent">
+          <span class="cell-value">
+            {% if log.email_sent %}
+              <span class="badge found">✓ Yes</span>
+            {% elif log.status.value == 'found' %}
+              <span class="badge error">✗ Failed</span>
+              {% if log.email_error %}<br><small>{{ log.email_error }}</small>{% endif %}
+            {% else %}
+              <span style="color: #666;">-</span>
+            {% endif %}
+          </span>
         </td>
         <td data-label="Error"><span class="cell-value">{{ log.error_message or '-' }}</span></td>
       </tr>

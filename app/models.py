@@ -39,5 +39,7 @@ class CheckLog(Base):
     checked_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     status = Column(Enum(StatusEnum), nullable=False)
     error_message = Column(Text, nullable=True)
+    email_sent = Column(Boolean, default=False, nullable=False)
+    email_error = Column(Text, nullable=True)
 
     watcher = relationship("Watcher", back_populates="logs")

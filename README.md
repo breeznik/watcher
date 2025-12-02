@@ -13,6 +13,7 @@ A FastAPI + APScheduler app that checks webpages on intervals, detects phrases, 
 - Configurable render timeout + post-render delay
 - Auto-tuned timeout with hard cap for heavy pages
 - Logs per check + simple admin UI
+- Email notification tracking - See if alert emails were successfully sent
 - Docker + Nginx setup included
 
 ## Quickstart (Docker)

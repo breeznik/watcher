@@ -37,5 +37,7 @@ class LogOut(BaseModel):
     checked_at: datetime
     status: StatusEnum
     error_message: Optional[str] = None
+    email_sent: bool = False
+    email_error: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

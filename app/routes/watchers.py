@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from datetime import datetime
 from app.database import get_db
 from app import models, schemas
 from app.services.watcher_service import scheduler
@@ -10,6 +11,18 @@ from app.routes.auth import get_current_user
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+def format_datetime(value):
+    """Format datetime to exclude microseconds"""
+    if value is None:
+        return '-'
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    return str(value)
+
+
+templates.env.filters['format_datetime'] = format_datetime
 
 
 def _ensure_user(request: Request):

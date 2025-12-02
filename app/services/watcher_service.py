@@ -309,6 +309,8 @@ class WatcherScheduler:
                 db.add(log_entry)
                 try:
                     db.commit()
+                    db.refresh(log_entry)  # Get the log entry ID
+                    log_id = log_entry.id
                 except StaleDataError:
                     db.rollback()
                     self.remove_job(watcher_id)
@@ -317,13 +319,30 @@ class WatcherScheduler:
                     db.rollback()
                     raise
 
+            # Send email notification if needed
             if should_email and email_list:
                 logger.info(f"[Watcher #{watcher_id}] Sending alert emails to {len(email_list)} recipients")
+                email_sent = False
+                email_error = None
                 try:
                     send_email(email_list, email_subject, email_body)
                     logger.info(f"[Watcher #{watcher_id}] Alert email sent successfully")
+                    email_sent = True
                 except Exception as e:
+                    email_error = str(e)[:500]
                     logger.error(f"[Watcher #{watcher_id}] Failed to send email: {e}")
+                
+                # Update log entry with email status
+                with SessionLocal() as db:
+                    log_entry = db.get(CheckLog, log_id)
+                    if log_entry:
+                        log_entry.email_sent = email_sent
+                        log_entry.email_error = email_error
+                        try:
+                            db.commit()
+                        except Exception as e:
+                            logger.error(f"[Watcher #{watcher_id}] Failed to update email status in log: {e}")
+                            db.rollback()
         finally:
             if force and watcher_id in self.manual_checks_in_progress:
                 self.manual_checks_in_progress.discard(watcher_id)
