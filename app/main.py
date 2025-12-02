@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.staticfiles import StaticFiles
@@ -5,6 +6,12 @@ from app.config import get_settings
 from app.database import Base, engine
 from app.routes import auth, watchers
 from app.services.watcher_service import scheduler
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 settings = get_settings()
 

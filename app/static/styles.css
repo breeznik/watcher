@@ -71,6 +71,7 @@ button, .primary, .link-btn, .danger, a {
 .badge.found { background: rgba(79,209,197,0.18); color: #7cf3e8; }
 .badge.not_found { background: rgba(255,193,7,0.2); color: #ffd166; }
 .badge.error { background: rgba(245,101,101,0.2); color: #fca5a5; }
+.badge.heavy { background: rgba(99,102,241,0.25); color: #c4c6ff; }
 .badge.unknown { background: rgba(138,160,200,0.2); color: var(--muted); }
 
 .alert { background: rgba(245,101,101,0.15); color: #fca5a5; padding: 10px; border-radius: 6px; }

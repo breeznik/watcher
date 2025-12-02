@@ -10,6 +10,7 @@ class StatusEnum(str, enum.Enum):
     found = "found"
     not_found = "not_found"
     error = "error"
+    heavy = "heavy"
 
 
 class Watcher(Base):
