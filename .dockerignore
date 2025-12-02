@@ -28,3 +28,5 @@ tests/
 .deploy/
 deploy/
 data/
+
+screenshot/

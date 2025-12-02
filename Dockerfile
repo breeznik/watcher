@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
-COPY entrypoint.sh ./
+COPY scripts/entrypoint.sh ./
 
 # Ensure runtime directories exist without copying local data
 RUN mkdir -p /app/data/artifacts

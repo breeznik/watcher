@@ -16,6 +16,16 @@ A FastAPI + APScheduler app that checks webpages on intervals, detects phrases, 
 - Email notification tracking - See if alert emails were successfully sent
 - Docker + Nginx setup included
 
+## Screenshots
+
+| Login Page | Watcher Dashboard |
+|------------|-------------------|
+| <img src="screenshot/login.png" width="400" alt="Login Page" /> | <img src="screenshot/watcher_dashboard.png" width="400" alt="Watcher Dashboard" /> |
+
+| Watcher Form | Logs Table |
+|-------------|------------|
+| <img src="screenshot/watcher_form.png" width="400" alt="Watcher Form" /> | <img src="screenshot/logs_table.png" width="400" alt="Logs Table" /> |
+
 ## Quickstart (Docker)
 ```bash
 cp .env.example .env
