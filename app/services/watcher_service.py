@@ -323,7 +323,7 @@ class WatcherScheduler:
                 self.manual_checks_in_progress.discard(watcher_id)
                 logger.info(f"[Watcher #{watcher_id}] Manual check completed, cleared from in-progress")
 
-    def manual_check(self, watcher_id: int) -> bool:-> bool:
+    def manual_check(self, watcher_id: int) -> bool:
         if watcher_id in self.manual_checks_in_progress:
             logger.warning("[Watcher #%s] Manual check already in progress, ignoring request", watcher_id)
             return False

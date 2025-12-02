@@ -20,7 +20,7 @@ A FastAPI + APScheduler app that checks webpages on intervals, detects phrases, 
 cp .env.example .env
 docker compose up --build
 ```
-Visit http://localhost and log in.
+Visit http://localhost:8080 and log in.
 
 ## Development
 ```bash
