@@ -49,6 +49,7 @@ def new_watcher_page(request: Request):
 @router.post("/watchers/new")
 def create_watcher(
     request: Request,
+    name: str = Form("Watcher"),
     url: str = Form(...),
     phrase: str = Form(...),
     interval_minutes: int = Form(...),
@@ -59,6 +60,7 @@ def create_watcher(
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
     watcher = models.Watcher(
+        name=name.strip() if name.strip() else "Watcher",
         url=url.strip(),
         phrase=phrase.strip(),
         interval_minutes=max(1, interval_minutes),
@@ -86,6 +88,7 @@ def edit_watcher_page(watcher_id: int, request: Request, db: Session = Depends(g
 def update_watcher(
     watcher_id: int,
     request: Request,
+    name: str = Form(...),
     url: str = Form(...),
     phrase: str = Form(...),
     interval_minutes: int = Form(...),
@@ -98,6 +101,7 @@ def update_watcher(
     watcher = db.get(models.Watcher, watcher_id)
     if not watcher:
         raise HTTPException(status_code=404, detail="Watcher not found")
+    watcher.name = name.strip()
     watcher.url = url.strip()
     watcher.phrase = phrase.strip()
     watcher.interval_minutes = max(1, interval_minutes)

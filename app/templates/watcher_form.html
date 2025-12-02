@@ -3,6 +3,9 @@
 <div class="card narrow">
   <h2>{{ 'Edit' if watcher else 'Create' }} Watcher</h2>
   <form method="post" class="form-grid">
+    <label>Name</label>
+    <input name="name" type="text" maxlength="255" value="{{ watcher.name if watcher else 'Watcher' }}" placeholder="e.g., My Website" />
+
     <label>URL</label>
     <input name="url" type="url" required value="{{ watcher.url if watcher else '' }}" />
 

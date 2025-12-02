@@ -12,7 +12,13 @@
   </div>
   {% endif %}
   <div class="actions">
-    <h2>Logs for Watcher #{{ watcher.id }}</h2>
+    <div style="max-width: 100%; overflow: hidden;">
+      <h2 style="margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Logs for {{ watcher.name }}</h2>
+      <div style="font-size: 0.85em; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        <span>ID: {{ watcher.id }}</span>
+        <button class="url-reveal-btn" data-url="{{ watcher.url }}" title="Show URL" onclick="event.preventDefault(); alert(this.dataset.url);">🔗 URL</button>
+      </div>
+    </div>
     <div style="display: flex; gap: 8px; align-items: center;">
       <select id="status-filter" class="link-btn" style="padding: 4px 8px;">
         <option value="all">All Status</option>
@@ -25,7 +31,7 @@
       <a href="/" class="link-btn">← Back</a>
     </div>
   </div>
-  <p style="margin: 0;"><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
+  <p style="margin: 0; color: var(--text-secondary); font-size: 0.9em;"><strong>Phrase:</strong> {{ watcher.phrase }}</p>
   <div id="logs-container" class="table-wrapper" style="flex: 1; overflow-y: auto;">
     <table class="table">
       <thead>
@@ -56,7 +62,7 @@
               {% endif %}
             </span>
           </td>
-          <td data-label="Error"><span class="cell-value">{{ log.error_message or '-' }}</span></td>
+          <td data-label="Error"><span class="cell-value error-msg" title="{{ log.error_message or '' }}">{{ log.error_message or '-' }}</span></td>
         </tr>
       {% endfor %}
       </tbody>
@@ -138,7 +144,7 @@
           <td data-label="Checked At"><span class="cell-value">${log.checked_at}</span></td>
           <td data-label="Status"><span class="cell-value"><span class="badge ${statusClass}">${statusText}</span></span></td>
           <td data-label="Email Sent"><span class="cell-value">${emailCell}</span></td>
-          <td data-label="Error"><span class="cell-value">${log.error_message || '-'}</span></td>
+          <td data-label="Error"><span class="cell-value error-msg" title="${log.error_message || ''}">${log.error_message || '-'}</span></td>
         `;
         tbody.appendChild(row);
       });

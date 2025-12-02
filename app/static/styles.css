@@ -83,6 +83,7 @@ p { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 .table { width: 100%; border-collapse: collapse; min-width: 640px; }
 .table th, .table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; font-size: 12px; }
 .table th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+.table td { max-width: 300px; overflow: hidden; text-overflow: ellipsis; word-wrap: break-word; }
 .cell-value { display: inline-block; }
 .cell-value.url {
   max-width: 260px;
@@ -90,6 +91,17 @@ p { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+}
+.cell-value.error-msg {
+  max-width: 250px;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  cursor: help;
+  word-break: break-all;
 }
 .cell-value.actions-col { display: inline-flex; justify-content: flex-end; }
 .flex { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -127,6 +139,20 @@ button, .primary, .link-btn, .danger, a {
 .danger:hover { opacity: 0.8; }
 .table td form { display: inline; margin: 0; }
 
+.url-reveal-btn {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.2s;
+}
+.url-reveal-btn:hover {
+  background: var(--accent);
+  color: var(--card);
+}
+
 .form-grid { display: grid; gap: 8px; }
 .form-grid label { font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
 .form-grid input[type="text"], .form-grid input[type="url"], .form-grid input[type="number"], .form-grid input[type="password"] {
@@ -161,8 +187,10 @@ button, .primary, .link-btn, .danger, a {
 }
 
 @media (max-width: 720px) {
-  .container { padding: 0 8px; }
-  .actions { flex-direction: column; align-items: stretch; gap: 8px; }
+  .container { padding: 8px; }
+  .card.narrow { margin-top: 12px; }
+  h2 { margin-bottom: 8px; }
+  .actions { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 8px; }
   .table-wrapper {
     background: transparent;
     border: none;

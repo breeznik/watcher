@@ -17,6 +17,7 @@ class Watcher(Base):
     __tablename__ = "watchers"
 
     id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
     url = Column(String(500), nullable=False)
     phrase = Column(String(255), nullable=False)
     interval_minutes = Column(Integer, nullable=False, default=5)

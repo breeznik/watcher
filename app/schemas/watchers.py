@@ -5,6 +5,7 @@ from app.models import StatusEnum
 
 
 class WatcherBase(BaseModel):
+    name: str = Field(max_length=255)
     url: str
     phrase: str
     interval_minutes: int = Field(ge=1, le=1440)

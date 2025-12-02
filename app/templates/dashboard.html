@@ -20,7 +20,7 @@
     <thead>
       <tr>
         <th>ID</th>
-        <th>URL</th>
+        <th>Name</th>
         <th>Phrase</th>
         <th>Interval (m)</th>
         <th>Enabled</th>
@@ -33,7 +33,12 @@
       {% for w in watchers %}
       <tr data-status="{{ w.last_status.value if w.last_status else 'unknown' }}">
         <td data-label="ID"><span class="cell-value">{{ w.id }}</span></td>
-        <td data-label="URL"><span class="cell-value url" title="{{ w.url }}">{{ w.url }}</span></td>
+        <td data-label="Name">
+          <span class="cell-value" style="display: flex; align-items: center; gap: 6px;">
+            <span>{{ w.name }}</span>
+            <button class="url-reveal-btn" data-url="{{ w.url }}" title="Show URL" onclick="event.preventDefault(); alert(this.dataset.url);">🔗</button>
+          </span>
+        </td>
         <td data-label="Phrase"><span class="cell-value">{{ w.phrase }}</span></td>
         <td data-label="Interval (m)"><span class="cell-value">{{ w.interval_minutes }} min</span></td>
         <td data-label="Enabled"><span class="cell-value">{{ 'Yes' if w.enabled else 'No' }}</span></td>
