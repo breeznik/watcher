@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 from typing import Optional
+from uuid import uuid4
 import logging
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -140,6 +141,7 @@ class WatcherScheduler:
     def __init__(self):
         self.scheduler = BackgroundScheduler(timezone=settings.timezone)
         self.render_timeouts: dict[int, float] = {}
+        self.manual_checks_in_progress: set[int] = set()
         self.default_render_timeout = max(
             MIN_RENDER_SECONDS,
             min(MAX_RENDER_SECONDS, float(settings.render_timeout)),
@@ -269,15 +271,16 @@ class WatcherScheduler:
             return StatusEnum.error, str(exc)[:500]
 
     def run_check(self, watcher_id: int, force: bool = False):
-        with SessionLocal() as db:
-            watcher = db.get(Watcher, watcher_id)
-            if not watcher or (not watcher.enabled and not force):
-                logger.info(f"[Watcher #{watcher_id}] Skipping check (not found or disabled)")
-                return
-            now = datetime.utcnow()
+        try:
+            with SessionLocal() as db:
+                watcher = db.get(Watcher, watcher_id)
+                if not watcher or (not watcher.enabled and not force):
+                    logger.info(f"[Watcher #{watcher_id}] Skipping check (not found or disabled)")
+                    return
+                now = datetime.utcnow()
 
-            status, error_message = self._detect(watcher)
-            logger.info(f"[Watcher #{watcher.id}] Check result: {status}")
+                status, error_message = self._detect(watcher)
+                logger.info(f"[Watcher #{watcher.id}] Check result: {status}")
 
             should_email = status == StatusEnum.found and watcher.emails
 
@@ -315,9 +318,31 @@ class WatcherScheduler:
                         logger.info(f"[Watcher #{watcher.id}] Alert email sent successfully")
                     except Exception as e:
                         logger.error(f"[Watcher #{watcher.id}] Failed to send email: {e}")
+        finally:
+            if force and watcher_id in self.manual_checks_in_progress:
+                self.manual_checks_in_progress.discard(watcher_id)
+                logger.info(f"[Watcher #{watcher_id}] Manual check completed, cleared from in-progress")
 
-    def manual_check(self, watcher_id: int):
-        self.run_check(watcher_id, force=True)
+    def manual_check(self, watcher_id: int) -> bool:-> bool:
+        if watcher_id in self.manual_checks_in_progress:
+            logger.warning("[Watcher #%s] Manual check already in progress, ignoring request", watcher_id)
+            return False
+        
+        self.manual_checks_in_progress.add(watcher_id)
+        run_date = datetime.now(self.scheduler.timezone)
+        job_id = f"manual-watcher-{watcher_id}-{uuid4().hex[:8]}"
+        logger.info("[Watcher #%s] Queuing manual check as job %s", watcher_id, job_id)
+        self.scheduler.add_job(
+            self.run_check,
+            trigger="date",
+            run_date=run_date,
+            args=[watcher_id],
+            kwargs={"force": True},
+            id=job_id,
+            replace_existing=False,
+            misfire_grace_time=MAX_RENDER_SECONDS,
+        )
+        return True
 
 
 scheduler = WatcherScheduler()

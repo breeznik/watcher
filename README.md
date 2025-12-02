@@ -2,6 +2,8 @@
 
 A FastAPI + APScheduler app that checks webpages on intervals, detects phrases, and sends email alerts. Supports JS-heavy pages using Playwright with stealth + fingerprinting.
 
+📖 **[User Guide](USER_GUIDE.md)** - Step-by-step instructions for using the application
+
 ## Features
 - Multiple watchers (URL, phrase, interval, recipients)
 - Background execution (no blocking HTTP)

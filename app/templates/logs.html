@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
+{% if request.query_params.get('queued') %}
+<div class="notice">
+  Manual check started. Feel free to stay on this page; refresh in a bit to see the latest status without leaving the app.
+</div>
+{% endif %}
+{% if request.query_params.get('busy') %}
+<div class="alert">
+  A manual check is already running for this watcher. Please wait for it to complete before starting another.
+</div>
+{% endif %}
 <h2>Logs for Watcher #{{ watcher.id }}</h2>
 <p><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
 <div class="table-wrapper">

@@ -126,8 +126,11 @@ def delete_watcher(watcher_id: int, request: Request, db: Session = Depends(get_
 def run_now(watcher_id: int, request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
-    scheduler.manual_check(watcher_id)
-    return RedirectResponse(url=f"/watchers/{watcher_id}/logs-view", status_code=303)
+    queued = scheduler.manual_check(watcher_id)
+    if queued:
+        return RedirectResponse(url=f"/watchers/{watcher_id}/logs-view?queued=1", status_code=303)
+    else:
+        return RedirectResponse(url=f"/watchers/{watcher_id}/logs-view?busy=1", status_code=303)
 
 
 @router.get("/watchers/{watcher_id}/logs-view")
@@ -209,8 +212,8 @@ def api_delete_watcher(watcher_id: int, request: Request, db: Session = Depends(
 @router.post("/watchers/{watcher_id}/run-check")
 def api_run_check(watcher_id: int, request: Request):
     _ensure_user(request)
-    scheduler.manual_check(watcher_id)
-    return {"status": "queued"}
+    queued = scheduler.manual_check(watcher_id)
+    return {"status": "queued" if queued else "already_running"}
 
 
 @router.get("/watchers/{watcher_id}/logs", response_model=list[schemas.LogOut])
