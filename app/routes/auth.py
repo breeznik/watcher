@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.config import get_settings
@@ -10,14 +10,6 @@ settings = get_settings()
 
 def get_current_user(request: Request):
     return request.session.get("user")
-
-
-def require_login(request: Request):
-    user = get_current_user(request)
-    if not user:
-        response = RedirectResponse(url="/login", status_code=303)
-        raise response
-    return user
 
 
 @router.get("/login")

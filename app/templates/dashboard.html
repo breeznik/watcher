@@ -4,46 +4,55 @@
   <h2>Watchers</h2>
   <a class="primary" href="/watchers/new">+ New Watcher</a>
 </div>
-<table class="table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>URL</th>
-      <th>Phrase</th>
-      <th>Interval (m)</th>
-      <th>Enabled</th>
-      <th>Last Status</th>
-      <th>Last Check</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for w in watchers %}
-    <tr>
-      <td>{{ w.id }}</td>
-      <td class="url">{{ w.url }}</td>
-      <td>{{ w.phrase }}</td>
-      <td>{{ w.interval_minutes }}</td>
-      <td>{{ 'Yes' if w.enabled else 'No' }}</td>
-      <td><span class="badge {{ w.last_status or 'unknown' }}">{{ w.last_status or 'unknown' }}</span></td>
-      <td>{{ w.last_check_at or '-' }}</td>
-      <td class="flex">
-        <a href="/watchers/{{ w.id }}/edit">Edit</a>
-        <form method="post" action="/watchers/{{ w.id }}/toggle">
-          <button type="submit" class="link-btn">{{ 'Disable' if w.enabled else 'Enable' }}</button>
-        </form>
-        <form method="post" action="/watchers/{{ w.id }}/run">
-          <button type="submit" class="link-btn">Check Now</button>
-        </form>
-        <a href="/watchers/{{ w.id }}/logs-view">Logs</a>
-        <form method="post" action="/watchers/{{ w.id }}/delete" onsubmit="return confirm('Delete watcher?')">
-          <button type="submit" class="danger">Delete</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>URL</th>
+        <th>Phrase</th>
+        <th>Interval (m)</th>
+        <th>Enabled</th>
+        <th>Last Status</th>
+        <th>Last Check</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in watchers %}
+      <tr>
+        <td data-label="ID"><span class="cell-value">{{ w.id }}</span></td>
+        <td data-label="URL"><span class="cell-value url" title="{{ w.url }}">{{ w.url }}</span></td>
+        <td data-label="Phrase"><span class="cell-value">{{ w.phrase }}</span></td>
+        <td data-label="Interval (m)"><span class="cell-value">{{ w.interval_minutes }}</span></td>
+        <td data-label="Enabled"><span class="cell-value">{{ 'Yes' if w.enabled else 'No' }}</span></td>
+        <td data-label="Last Status">
+          {% set status_value = w.last_status.value if w.last_status else 'unknown' %}
+          <span class="cell-value">
+            <span class="badge {{ status_value }}">{{ status_value.replace('_', ' ') | title }}</span>
+          </span>
+        </td>
+        <td data-label="Last Check"><span class="cell-value">{{ w.last_check_at or '-' }}</span></td>
+        <td data-label="Actions">
+          <span class="cell-value actions-col flex">
+            <a href="/watchers/{{ w.id }}/edit">Edit</a>
+            <form method="post" action="/watchers/{{ w.id }}/toggle">
+              <button type="submit" class="link-btn">{{ 'Disable' if w.enabled else 'Enable' }}</button>
+            </form>
+            <form method="post" action="/watchers/{{ w.id }}/run">
+              <button type="submit" class="link-btn">Check Now</button>
+            </form>
+            <a href="/watchers/{{ w.id }}/logs-view">Logs</a>
+            <form method="post" action="/watchers/{{ w.id }}/delete" onsubmit="return confirm('Delete watcher?')">
+              <button type="submit" class="danger">Delete</button>
+            </form>
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% if not watchers %}
   <p>No watchers yet.</p>
 {% endif %}

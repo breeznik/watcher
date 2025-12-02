@@ -2,23 +2,28 @@
 {% block content %}
 <h2>Logs for Watcher #{{ watcher.id }}</h2>
 <p><strong>URL:</strong> {{ watcher.url }} | <strong>Phrase:</strong> {{ watcher.phrase }}</p>
-<table class="table">
-  <thead>
-    <tr>
-      <th>Checked At (UTC)</th>
-      <th>Status</th>
-      <th>Error</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for log in logs %}
-    <tr>
-      <td>{{ log.checked_at }}</td>
-      <td><span class="badge {{ log.status }}">{{ log.status }}</span></td>
-      <td>{{ log.error_message or '-' }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Checked At (UTC)</th>
+        <th>Status</th>
+        <th>Error</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for log in logs %}
+      <tr>
+        <td data-label="Checked At"><span class="cell-value">{{ log.checked_at }}</span></td>
+        {% set status_value = log.status.value if log.status else 'unknown' %}
+        <td data-label="Status">
+          <span class="cell-value"><span class="badge {{ status_value }}">{{ status_value.replace('_', ' ') | title }}</span></span>
+        </td>
+        <td data-label="Error"><span class="cell-value">{{ log.error_message or '-' }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
 <a href="/" class="link-btn">Back</a>
 {% endblock %}
