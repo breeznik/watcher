@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-from app.config import get_settings
+from app.core.config import get_settings
 
 settings = get_settings()
 database_url = settings.database_url

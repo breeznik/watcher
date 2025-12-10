@@ -6,7 +6,7 @@ Create Date: 2025-11-29
 """
 from alembic import op
 import sqlalchemy as sa
-from app.models import StatusEnum
+from app.db.models import StatusEnum
 
 # revision identifiers, used by Alembic.
 revision = '20251129_0001'

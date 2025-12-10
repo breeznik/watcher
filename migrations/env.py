@@ -5,8 +5,9 @@ import os
 import sys
 
 sys.path.append(os.path.abspath("."))
-from app.database import Base  # noqa: E402
-from app.config import get_settings  # noqa: E402
+from app.db.database import Base  # noqa: E402
+from app.db import models  # noqa: E402
+from app.core.config import get_settings  # noqa: E402
 
 settings = get_settings()
 config = context.config

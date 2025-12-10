@@ -1,1 +1,1 @@
-docker build -t watcher .
+cd .. && docker build -t watcher .

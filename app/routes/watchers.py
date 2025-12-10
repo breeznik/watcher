@@ -4,8 +4,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from datetime import datetime
-from app.database import get_db
-from app import models, schemas
+from app.db.database import get_db
+from app.db import models
+from app import schemas
 from app.services.watcher_service import scheduler
 from app.routes.auth import get_current_user
 

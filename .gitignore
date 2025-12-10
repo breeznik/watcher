@@ -6,3 +6,5 @@ __pycache__/
 .venv/
 data/
 .mypy_cache/
+.pytest_cache/
+reports/

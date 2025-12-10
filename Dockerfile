@@ -13,6 +13,7 @@ RUN apt-get update \
     libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
     libpangocairo-1.0-0 libatspi2.0-0 libx11-xcb1 libxshmfence1 \
     libgtk-3-0 libxss1 libxtst6 libglib2.0-0 fonts-liberation tini \
+    tesseract-ocr tesseract-ocr-eng \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

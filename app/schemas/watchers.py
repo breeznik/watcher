@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
-from app.models import StatusEnum
+from app.db.models import StatusEnum
 
 
 class WatcherBase(BaseModel):

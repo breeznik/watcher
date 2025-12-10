@@ -246,7 +246,7 @@ All logs are stored in UTC but you can adjust the scheduler timezone.
 ## Support & Contributing
 
 - Found a bug? Check application logs first
-- Need help? Review the main [README.md](README.md) for technical details
+- Need help? Review the main [README.md](../README.md) for technical details
 - Want to contribute? See the repository for development setup
 
 ---

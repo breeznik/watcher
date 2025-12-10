@@ -1,0 +1,76 @@
+stealth:
+  user_agents:
+    agents:
+    - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)
+      Chrome/131.0.0.0 Safari/537.36
+    - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like
+      Gecko) Chrome/131.0.0.0 Safari/537.36
+    - Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0
+    - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML,
+      like Gecko) Version/17.4 Safari/605.1.15
+    - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0
+      Safari/537.36
+    - Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15
+      (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1
+    weights:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    rotation_strategy: random
+  headers:
+    accept_language: en-US,en;q=0.9
+    dnt: '1'
+    referer: null
+  enable_webdriver_masking: true
+  enable_plugin_masking: true
+  enable_language_masking: true
+  enable_chrome_runtime: true
+  request_throttling: 0.0
+  randomize_viewport: true
+rendering:
+  max_timeout: 90.0
+  poll_interval: 5.0
+  scroll_increment: 500
+  max_scrolls: 3
+  hover_selectors:
+  - button.load-more
+  - a.load-more
+  - div.load-more
+  - .infinite-scroll-trigger
+  - '[data-load-more]'
+  click_selectors:
+  - button.load-more
+  - a.load-more
+  - div.load-more
+  - .show-more-button
+  - '[data-click-load]'
+  load_more_button_selectors:
+  - button:has-text('Load More')
+  - button:has-text('Show More')
+  - button:has-text('See More')
+  - a:has-text('Load More')
+  - a:has-text('Show More')
+  validate_visibility: true
+session:
+  enable_cookie_storage: true
+  cookie_storage_path: ./data/cookies
+  cookie_expiration_days: 30
+  session_ttl_seconds: 3600
+  max_sessions_per_domain: 5
+resilience:
+  max_retries: 3
+  retry_strategy: exponential_backoff
+  backoff_base: 1.0
+  backoff_max: 5.0
+  size_threshold_percentage: 0.5
+  fallback_strategy: all
+  ocr_enabled: true
+  wayback_enabled: true
+  fuzzy_match_enabled: true
+  fuzzy_match_threshold: 85
+debug_mode: false
+log_level: INFO
+artifact_dir: ./data/artifacts
