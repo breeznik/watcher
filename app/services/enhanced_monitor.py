@@ -400,24 +400,41 @@ class EnhancedMonitor:
         return None
 
     def fuzzy_match_content(self, content: str, target_phrase: str) -> bool:
-        """Perform fuzzy matching using Levenshtein distance."""
+        """Perform fuzzy matching using Levenshtein distance on phrases."""
         if not self.config.resilience.fuzzy_match_enabled:
             return False
 
         try:
-            # Find the best match in the content
             words = content.split()
             target_words = target_phrase.split()
+            target_len = len(target_words)
+            
+            if target_len == 0:
+                return False
 
-            for word in words:
-                for target_word in target_words:
-                    distance = Levenshtein.distance(word.lower(), target_word.lower())
-                    max_len = max(len(word), len(target_word))
+            # Sliding window search through content words
+            for i in range(len(words) - target_len + 1):
+                match_failed = False
+                current_window_sims = []
+                
+                for j in range(target_len):
+                    content_word = words[i + j]
+                    target_word = target_words[j]
+                    
+                    distance = Levenshtein.distance(content_word.lower(), target_word.lower())
+                    max_len = max(len(content_word), len(target_word))
                     similarity = 100 * (1 - distance / max_len) if max_len > 0 else 0
-
-                    if similarity >= self.config.resilience.fuzzy_match_threshold:
-                        logger.info(f"Fuzzy match found: '{word}' vs '{target_word}' ({similarity:.1f}% similarity)")
-                        return True
+                    
+                    if similarity < self.config.resilience.fuzzy_match_threshold:
+                        match_failed = True
+                        break
+                    current_window_sims.append(similarity)
+                
+                if not match_failed:
+                    avg_similarity = sum(current_window_sims) / len(current_window_sims)
+                    matched_phrase = " ".join(words[i:i+target_len])
+                    logger.info(f"Fuzzy match found: '{matched_phrase}' vs '{target_phrase}' ({avg_similarity:.1f}% avg similarity)")
+                    return True
 
             return False
         except Exception as e:
