@@ -391,9 +391,10 @@ class EnhancedMonitor:
                     const rooms = getRooms();
                     const lowerTarget = target_phrase.toLowerCase();
                     const keywords = lowerTarget.split(" ").filter(k => k.length > 0);
+                    let debugMsg = `Found ${rooms.length} rooms. Keywords: ${keywords.join(",")}. `;
                     
                     // If no rooms found, we might want to fail safe, or return false
-                    if (rooms.length === 0) return false;
+                    if (rooms.length === 0) return { success: false, reason: debugMsg + "No room cards found." };
                     
                     for (const room of rooms) {
                         const text = room.innerText || "";
@@ -408,16 +409,18 @@ class EnhancedMonitor:
                              const soldOutBadge = room.querySelector('[data-testid="soldout-room-offer"]') || room.querySelector('.SoldOutMessage');
                              
                              if (!soldOutText && !soldOutBadge) {
-                                 return true; // Found available room
+                                 return { success: true, reason: debugMsg + "Match found and available." };
+                             } else {
+                                 debugMsg += `match found but sold out (start text: ${lowerText.substring(0, 30)}...). `;
                              }
                         }
                     }
-                    return false;
+                    return { success: false, reason: debugMsg + "No available room matched criteria." };
                 }
             """
             result = page.evaluate(js_script, target_phrase)
-            logger.info(f"Agoda check result: {result}")
-            return result
+            logger.info(f"Agoda check result: {result['success']} - Reason: {result['reason']}")
+            return result['success']
             
         except Exception as e:
             logger.error(f"Error in Agoda availability check: {e}")
