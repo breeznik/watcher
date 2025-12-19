@@ -10,15 +10,13 @@ import hashlib
 import sqlite3
 from urllib.parse import urlparse
 import requests
-import Levenshtein
+
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 from app.core.stealth_config import (
     MonitoringConfig, load_config_from_file, parse_cli_args,
     create_default_config_file, UserAgentConfig, HeaderConfig
 )
-import pytesseract
-from PIL import Image
-import io
+
 
 logger = logging.getLogger(__name__)
 
@@ -349,80 +347,7 @@ class EnhancedMonitor:
         delay = min(base * (2 ** (attempt - 1)), max_delay)
         return delay
 
-    def perform_ocr_fallback(self, page, screenshot_path: Optional[str] = None) -> str:
-        """Perform OCR on page content as fallback."""
-        if not self.config.resilience.ocr_enabled:
-            return ""
 
-        try:
-            # Take screenshot if not provided
-            if not screenshot_path:
-                screenshot_path = f"temp_screenshot_{int(time.time())}.png"
-                page.screenshot(path=screenshot_path)
-
-            # Perform OCR
-            image = Image.open(screenshot_path)
-            text = pytesseract.image_to_string(image)
-            return text
-        except Exception as e:
-            logger.warning(f"OCR fallback failed: {e}")
-            return ""
-        finally:
-            # Clean up temporary screenshot
-            if screenshot_path and "temp_screenshot" in screenshot_path:
-                try:
-                    os.remove(screenshot_path)
-                except:
-                    pass
-
-    def check_wayback_machine(self, url: str) -> Optional[str]:
-        """Check Wayback Machine for archived version of the page."""
-        if not self.config.resilience.wayback_enabled:
-            return None
-
-        try:
-            wayback_url = f"http://archive.org/wayback/available?url={url}"
-            response = requests.get(wayback_url, timeout=10)
-            data = response.json()
-
-            if "archived_snapshots" in data and data["archived_snapshots"]:
-                closest = data["archived_snapshots"]["closest"]
-                archive_url = closest["url"]
-                logger.info(f"Found Wayback Machine archive: {archive_url}")
-
-                # Fetch the archived content
-                archive_response = requests.get(archive_url, timeout=15)
-                return archive_response.text
-
-        except Exception as e:
-            logger.warning(f"Wayback Machine check failed: {e}")
-
-        return None
-
-    def fuzzy_match_content(self, content: str, target_phrase: str) -> bool:
-        """Perform fuzzy matching using Levenshtein distance."""
-        if not self.config.resilience.fuzzy_match_enabled:
-            return False
-
-        try:
-            # Find the best match in the content
-            words = content.split()
-            target_words = target_phrase.split()
-
-            for word in words:
-                for target_word in target_words:
-                    distance = Levenshtein.distance(word.lower(), target_word.lower())
-                    max_len = max(len(word), len(target_word))
-                    similarity = 100 * (1 - distance / max_len) if max_len > 0 else 0
-
-                    if similarity >= self.config.resilience.fuzzy_match_threshold:
-                        logger.info(f"Fuzzy match found: '{word}' vs '{target_word}' ({similarity:.1f}% similarity)")
-                        return True
-
-            return False
-        except Exception as e:
-            logger.warning(f"Fuzzy matching failed: {e}")
-            return False
 
     def should_retry_based_on_size(self, current_content: str, previous_content: Optional[str] = None) -> bool:
         """Determine if retry is needed based on content size thresholds."""
@@ -441,11 +366,69 @@ class EnhancedMonitor:
 
         return False
 
+    def check_agoda_availability(self, page, target_phrase: str) -> bool:
+        """
+        Specialized check for Agoda availability using direct DOM traversal.
+        Returns True if an available room matching the phrase is found.
+        """
+        logger.info(f"Running Agoda-specific availability check for phrase: '{target_phrase}'")
+        try:
+            # JavaScript to iterate rooms and check status directly in the browser
+            # This avoids expensive multiple locator calls and parsing issues
+            js_script = """
+                (target_phrase) => {
+                    const getRooms = () => {
+                         const all = [];
+                         // Selector A: Standard Grid
+                         document.querySelectorAll('div[data-testid="room-item"]').forEach(el => all.push(el));
+                         // Selector B: Master List
+                         document.querySelectorAll('.MasterRoom').forEach(el => all.push(el));
+                         // Selector C: Child Rooms
+                         document.querySelectorAll('.ChildRoomsList-room').forEach(el => all.push(el));
+                         return all;
+                    };
+                    
+                    const rooms = getRooms();
+                    const lowerTarget = target_phrase.toLowerCase();
+                    const keywords = lowerTarget.split(" ").filter(k => k.length > 0);
+                    
+                    // If no rooms found, we might want to fail safe, or return false
+                    if (rooms.length === 0) return false;
+                    
+                    for (const room of rooms) {
+                        const text = room.innerText || "";
+                        const lowerText = text.toLowerCase();
+                        
+                        // Check if room matches ALL keywords (token-based match)
+                        const isMatch = keywords.every(k => lowerText.includes(k));
+                        
+                        if (isMatch) {
+                             // Check if sold out
+                             const soldOutText = lowerText.includes("sold out");
+                             const soldOutBadge = room.querySelector('[data-testid="soldout-room-offer"]') || room.querySelector('.SoldOutMessage');
+                             
+                             if (!soldOutText && !soldOutBadge) {
+                                 return true; // Found available room
+                             }
+                        }
+                    }
+                    return false;
+                }
+            """
+            result = page.evaluate(js_script, target_phrase)
+            logger.info(f"Agoda check result: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in Agoda availability check: {e}")
+            return False
+
     def monitor_url(
         self,
         url: str,
         target_phrase: str,
         selector: Optional[str] = None,
+        exclude_selector: Optional[str] = None,
         screenshot_path: Optional[str] = None,
         html_dump_path: Optional[str] = None
     ) -> Tuple[bool, str, Dict[str, Any]]:
@@ -586,9 +569,91 @@ class EnhancedMonitor:
                                 'found': page.locator(selector).count() > 0
                             })
 
-                        # Get page content
+                        # SPECIALIZED AGODA CHECK
+                        if "agoda.com" in url:
+                            step_start = time.time()
+                            found = self.check_agoda_availability(page, target_phrase)
+                            metrics['steps'].append({
+                                'step': 'agoda_check',
+                                'timestamp': time.time(),
+                                'duration': time.time() - step_start,
+                                'found': found
+                            })
+                            
+                            if found:
+                                metrics['final_status'] = 'success'
+                                message = f"Target phrase '{target_phrase}' found on {url} (Agoda Check)"
+                                logger.info(message)
+                                
+                                # Save cookies before returning
+                                final_cookies = context.cookies()
+                                if final_cookies:
+                                    self.save_cookies_for_domain(domain, final_cookies)
+                                    
+                                return True, message, metrics
+                            
+                            # If not found via Agoda check, we consider it not found for this iteration
+                            # We skip the generic check to avoid false positives/negatives from raw text
+                            logger.info("Agoda check returned False, skipping generic text check")
+                            # We continue to retry loop (backoff)
+                            # But first ensure we close browser
+                            browser.close()
+                            
+                            if attempt < self.config.resilience.max_retries:
+                                backoff_delay = self.calculate_exponential_backoff(attempt)
+                                if backoff_delay > 0:
+                                    logger.info(f"Waiting {backoff_delay:.2f}s before retry attempt {attempt + 1}")
+                                    time.sleep(backoff_delay)
+                            continue
+
+                        # Capture full content and excluded content before removal
+
                         step_start = time.time()
-                        content = page.content()
+                        full_content = page.content()
+                        excluded_content = ""
+                        if exclude_selector:
+                            try:
+                                count = page.locator(exclude_selector).count()
+                                logger.info(f"Found {count} elements matching exclude selector")
+                                excluded_content = page.locator(exclude_selector).evaluate_all("els => els.map(el => el.innerText.trim()).join(' ')")
+                                logger.info(f"Captured excluded content using evaluate_all")
+                            except Exception as e:
+                                logger.warning(f"Failed to capture excluded content: {e}")
+                        metrics['steps'].append({
+                            'step': 'content_capture',
+                            'timestamp': time.time(),
+                            'duration': time.time() - step_start,
+                            'full_content_length': len(full_content),
+                            'excluded_content_length': len(excluded_content)
+                        })
+
+                        # Remove excluded elements if provided
+                        if exclude_selector:
+                            step_start = time.time()
+                            try:
+                                logger.info(f"Removing elements matching: {exclude_selector}")
+                                removed_count = page.locator(exclude_selector).count()
+                                page.locator(exclude_selector).evaluate_all("els => els.forEach(el => el.remove())")
+                                logger.info(f"Removed {removed_count} excluded elements")
+                                metrics['steps'].append({
+                                    'step': 'exclude_elements',
+                                    'timestamp': time.time(),
+                                    'duration': time.time() - step_start,
+                                    'selector': exclude_selector,
+                                    'removed_count': removed_count
+                                })
+                            except Exception as e:
+                                logger.warning(f"Failed to remove excluded elements: {e}")
+                                metrics['steps'].append({
+                                    'step': 'exclude_elements_error',
+                                    'timestamp': time.time(),
+                                    'duration': time.time() - step_start,
+                                    'error': str(e)
+                                })
+
+                        # Get cleaned page content
+                        step_start = time.time()
+                        content = page.locator('body').inner_text()
                         metrics['steps'].append({
                             'step': 'content_extraction',
                             'timestamp': time.time(),
@@ -645,46 +710,14 @@ class EnhancedMonitor:
                         step_start = time.time()
                         found = target_phrase.lower() in content.lower()
 
-                        if not found and self.config.resilience.fuzzy_match_enabled:
-                            found = self.fuzzy_match_content(content, target_phrase)
+                        # Check if phrase is exclusively in sold-out content
+                        if not found and excluded_content and target_phrase.lower() in excluded_content.lower():
+                            metrics['final_status'] = 'not_found'
+                            message = f"Target phrase '{target_phrase}' found only in sold-out content, returning not found"
+                            logger.info(message)
+                            return False, message, metrics
 
-                        if not found and self.config.resilience.ocr_enabled:
-                            ocr_text = self.perform_ocr_fallback(page)
-                            if ocr_text:
-                                found = target_phrase.lower() in ocr_text.lower()
-                                if found:
-                                    metrics['steps'].append({
-                                        'step': 'ocr_fallback_success',
-                                        'timestamp': time.time(),
-                                        'duration': time.time() - step_start,
-                                        'method': 'ocr'
-                                    })
-                            else:
-                                metrics['steps'].append({
-                                    'step': 'ocr_fallback_failed',
-                                    'timestamp': time.time(),
-                                    'duration': time.time() - step_start,
-                                    'method': 'ocr'
-                                })
 
-                        if not found and self.config.resilience.wayback_enabled:
-                            wayback_content = self.check_wayback_machine(url)
-                            if wayback_content:
-                                found = target_phrase.lower() in wayback_content.lower()
-                                if found:
-                                    metrics['steps'].append({
-                                        'step': 'wayback_fallback_success',
-                                        'timestamp': time.time(),
-                                        'duration': time.time() - step_start,
-                                        'method': 'wayback'
-                                    })
-                            else:
-                                metrics['steps'].append({
-                                    'step': 'wayback_fallback_failed',
-                                    'timestamp': time.time(),
-                                    'duration': time.time() - step_start,
-                                    'method': 'wayback'
-                                })
 
                         metrics['steps'].append({
                             'step': 'content_analysis',

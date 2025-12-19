@@ -61,16 +61,13 @@ session:
   session_ttl_seconds: 3600
   max_sessions_per_domain: 5
 resilience:
-  max_retries: 3
+  max_retries: 0
   retry_strategy: exponential_backoff
   backoff_base: 1.0
   backoff_max: 5.0
   size_threshold_percentage: 0.5
   fallback_strategy: all
-  ocr_enabled: true
-  wayback_enabled: true
-  fuzzy_match_enabled: true
-  fuzzy_match_threshold: 85
+
 debug_mode: false
 log_level: INFO
 artifact_dir: ./data/artifacts

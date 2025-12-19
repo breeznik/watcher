@@ -1,5 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, BaseModel
+
+class MonitoringSettings(BaseModel):
+    max_retries: int = 0
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -27,6 +30,7 @@ class Settings(BaseSettings):
     debug_dump_artifacts: bool = False  # when true, save fetched HTML and screenshots
     debug_artifacts_dir: str = "./data/artifacts"  # where to save debug files
     debug_wait_selector: str | None = None  # optional CSS selector to wait for when rendering
+    monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
 
 def get_settings() -> Settings:
     return Settings()

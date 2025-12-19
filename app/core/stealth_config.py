@@ -132,7 +132,7 @@ class ResilienceConfig:
     fallback_strategy: FallbackStrategy = FallbackStrategy.ALL
     ocr_enabled: bool = True
     wayback_enabled: bool = True
-    fuzzy_match_enabled: bool = True
+    fuzzy_match_enabled: bool = False
     fuzzy_match_threshold: int = 85  # Levenshtein similarity percentage
 
 @dataclass

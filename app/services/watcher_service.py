@@ -79,6 +79,7 @@ class WatcherScheduler:
         self.monitor.config.rendering.max_timeout = float(settings.render_timeout)
         self.monitor.config.debug_mode = settings.debug_dump_artifacts
         self.monitor.config.artifact_dir = settings.debug_artifacts_dir
+        self.monitor.config.resilience.max_retries = settings.monitoring.max_retries
 
     def start(self):
         if not self.scheduler.running:
@@ -144,10 +145,17 @@ class WatcherScheduler:
                 screenshot_path = str(out_dir / f"{ts}_screenshot.png")
                 html_dump_path = str(out_dir / f"{ts}_content.html")
 
+            # Determine exclude_selector based on URL
+            exclude_selector = None
+            if "agoda.com" in watcher.url.lower():
+                logger.info(f"[Watcher #{watcher.id}] Agoda URL detected, relying on EnhancedMonitor specialized check")
+
+
             found, msg, metrics = self.monitor.monitor_url(
                 url=watcher.url,
                 target_phrase=watcher.phrase,
                 selector=wait_sel,
+                exclude_selector=exclude_selector,
                 screenshot_path=screenshot_path,
                 html_dump_path=html_dump_path
             )
